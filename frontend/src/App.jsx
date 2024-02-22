@@ -1,9 +1,21 @@
 import "./App.css";
 import { useEffect, useRef, useState } from "react";
+import emojis from "./emojis.js";
 
 function App() {
     const canvasRef = useRef(null);
     const [isDrawing, setIsDrawing] = useState(false);
+    const [emoji, setEmoji] = useState({});
+    const setRandomEmoji = () => {
+        const name =
+            Object.keys(emojis)[
+                Math.floor(Math.random() * Object.keys(emojis).length)
+            ];
+        setEmoji({
+            name,
+            emoji: emojis[name],
+        });
+    };
 
     // Initialize canvas context when component mounts
     useEffect(() => {
@@ -11,6 +23,8 @@ function App() {
         const ctx = canvas.getContext("2d");
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        setRandomEmoji();
     }, []);
 
     const startDrawing = (event) => {
@@ -53,7 +67,7 @@ function App() {
         canvas.toBlob((blob) => {
             const formData = new FormData();
             formData.append("file", blob, "drawing.png");
-            fetch("http://localhost:8000/upload/smile", {
+            fetch(`http://localhost:8000/upload/${emoji.name}`, {
                 method: "POST",
                 body: formData,
             })
@@ -61,6 +75,8 @@ function App() {
                 .then((data) => console.log(data))
                 .catch((error) => console.error(error));
         });
+        handleClear();
+        setRandomEmoji();
     };
 
     const handleClear = () => {
@@ -72,6 +88,9 @@ function App() {
 
     return (
         <>
+            <h3>
+                Draw {emoji.name}: {emoji.emoji}
+            </h3>
             <canvas
                 ref={canvasRef}
                 width={256}
