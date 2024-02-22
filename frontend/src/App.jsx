@@ -1,6 +1,7 @@
 import "./App.css";
 import { useEffect, useRef, useState } from "react";
 import emojis from "./emojis.js";
+import config from "./config.js";
 
 function App() {
     const canvasRef = useRef(null);
@@ -67,7 +68,7 @@ function App() {
         canvas.toBlob((blob) => {
             const formData = new FormData();
             formData.append("file", blob, "drawing.png");
-            fetch(`http://localhost:8000/upload/${emoji.name}`, {
+            fetch(`${config.BACKEND_URL}/upload/${emoji.name}`, {
                 method: "POST",
                 body: formData,
             })
