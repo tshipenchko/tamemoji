@@ -87,6 +87,11 @@ function App() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     };
 
+    const handleSkip = () => {
+        handleClear();
+        setRandomEmoji();
+    }
+
     return (
         <>
             <h3>
@@ -109,6 +114,8 @@ function App() {
             <button onClick={handleSubmit}>Submit</button>
             <span> </span>
             <button onClick={handleClear}>Clear</button>
+            <span> </span>
+            <button onClick={handleSkip}>Skip</button>
         </>
     );
 }
