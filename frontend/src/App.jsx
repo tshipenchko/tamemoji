@@ -7,6 +7,7 @@ function App() {
     const canvasRef = useRef(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [emoji, setEmoji] = useState({});
+    const [message, setMessage] = useState('');
     const setRandomEmoji = () => {
         const name =
             Object.keys(emojis)[
@@ -18,7 +19,6 @@ function App() {
         });
     };
 
-    // Initialize canvas context when component mounts
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
@@ -75,6 +75,14 @@ function App() {
                 .then((response) => response.json())
                 .then((data) => console.log(data))
                 .catch((error) => console.error(error));
+
+            fetch(`${config.BACKEND_URL}/send/${emoji.name}`, {
+                method: "POST",
+                body: formData,
+            })
+                .then((response) => response.json())
+                .then((data) => console.log(data))
+                .catch((error) => console.error(error));
         });
         handleClear();
         setRandomEmoji();
@@ -91,6 +99,34 @@ function App() {
         handleClear();
         setRandomEmoji();
     }
+
+    useEffect(() => {
+        setRandomEmoji();
+    }, []);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            canvasRef.current.toBlob((blob) => {
+                const formData = new FormData();
+                console.log(emoji.name);
+                formData.append("file", blob, "drawing.png");
+                fetch(`${config.BACKEND_URL}/send/${emoji.name}`, {
+                    method: "POST",
+                    body: formData,
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        setMessage(data.message)
+                        console.log(data.message)
+                        console.log(data)
+                    })
+                    .catch((error) => console.error(error));
+            });
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [emoji.name]);
+
 
     return (
         <>
@@ -116,6 +152,7 @@ function App() {
             <button onClick={handleClear}>Clear</button>
             <span> </span>
             <button onClick={handleSkip}>Skip</button>
+            <div id = "output">{message}</div>
         </>
     );
 }
