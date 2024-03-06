@@ -5,17 +5,30 @@ import aiofiles
 from fastapi import FastAPI, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
+from ai.model import EmojiClassifier
+from config import config
+
+classifier = EmojiClassifier(config.classifier)
+classifier.load(config.model_name)
+
 EMOJIS = {
     "smile",
     "sad",
+    "heart",
+    "brokenHeart",
+    "x",
+    "check",
+    "hundred",
+    "pockerFace",
+    "dead",
+    "happy",
+    "upset",
     "angry",
-    "laugh",
-    "cry",
-    "shock",
 }
 
 app = FastAPI()
 
+# noinspection PyTypeChecker
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,8 +49,27 @@ async def write_file(directory, filename, contents):
         await f.write(contents)
 
 
+@app.post("/send/{emoji}")
+def send_file(file: UploadFile = Form(...)):
+    contents = file.file.read()
+
+    # Resize the image to classifier's input size
+    image = classifier.resize_image(contents)
+    predictions, answer = classifier.predict(image)
+
+    if predictions[answer] < 0.2:
+        return {"message": "I don't know what it is"}
+
+    return {
+        "message": f"I think, it's a {answer}", "predictions": predictions
+    }
+
+
 @app.post("/upload/{emoji}")
 async def upload_file(emoji: str, file: UploadFile = Form(...)):
+    if emoji not in EMOJIS:
+        return {"error": "Emoji not found"}
+
     directory = f"dataset/{emoji}"
     filename = f"{uuid.uuid4().hex}.png"
     contents = await file.read()
