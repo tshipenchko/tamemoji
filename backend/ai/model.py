@@ -9,7 +9,7 @@ from PIL import Image
 
 
 class EmojiClassifierConfig(BaseModel):
-    image_shape: tuple[int, int] = (256, 256)
+    image_shape: tuple[int, int] = (64, 64)
     num_classes: int = 12
     batch_size: int = 32
     epochs: int = 10
@@ -33,21 +33,21 @@ class EmojiClassifier:
 
         self.train_generator = ImageDataGenerator(**data_gen_args).flow_from_directory(
             self.config.train_path,
-            target_size=(64, 64),
+            target_size=self.config.image_shape,
             batch_size=self.config.batch_size,
             class_mode="categorical",
             color_mode="grayscale",
         )
         self.validation_generator = ImageDataGenerator().flow_from_directory(
             self.config.validation_path,
-            target_size=(64, 64),
+            target_size=self.config.image_shape,
             batch_size=self.config.batch_size,
             class_mode="categorical",
             color_mode="grayscale",
         )
         self.test_generator = ImageDataGenerator().flow_from_directory(
             self.config.test_path,
-            target_size=(64, 64),
+            target_size=self.config.image_shape,
             batch_size=self.config.batch_size,
             class_mode="categorical",
             color_mode="grayscale",
@@ -56,7 +56,7 @@ class EmojiClassifier:
     def build_model(self):
         model = models.Sequential(
             [
-                layers.Conv2D(32, (3, 3), activation="relu", input_shape=(64, 64, 1)),
+                layers.Conv2D(32, (3, 3), activation="relu", input_shape=(*self.config.image_shape, 1)),
                 layers.MaxPooling2D((2, 2)),
                 layers.Conv2D(64, (3, 3), activation="relu"),
                 layers.MaxPooling2D((2, 2)),
@@ -164,7 +164,7 @@ def _main():
             image = np.array(Image.open(io.BytesIO(image)).convert("L"))
 
             # Reshape to 64x64 image
-            image = image.reshape(1, 64, 64, 1)
+            image = image.reshape(1, *classifier.config.image_shape, 1)
 
         print(classifier.predict(image))
 
