@@ -53,10 +53,20 @@ class EmojiClassifier:
             color_mode="grayscale",
         )
 
+        self.class_indices = self.train_generator.class_indices
+        print(self.class_indices)
+        self.classes = {v: k for k, v in self.class_indices.items()}
+        print(self.classes)
+
     def build_model(self):
         model = models.Sequential(
             [
-                layers.Conv2D(32, (3, 3), activation="relu", input_shape=(*self.config.image_shape, 1)),
+                layers.Conv2D(
+                    32,
+                    (3, 3),
+                    activation="relu",
+                    input_shape=(*self.config.image_shape, 1),
+                ),
                 layers.MaxPooling2D((2, 2)),
                 layers.Conv2D(64, (3, 3), activation="relu"),
                 layers.MaxPooling2D((2, 2)),
@@ -102,7 +112,13 @@ class EmojiClassifier:
         self.model = models.load_model(path)
 
     def predict(self, image):
-        return self.model.predict(image)
+        prediction = self.model.predict(image)
+        class_index = np.argmax(prediction)
+        class_name = self.classes[class_index]
+        return {
+            current_class: float(prediction[0][i])
+            for current_class, i in self.class_indices.items()
+        }, class_name
 
     def evaluate_another(self):
         incorrects = []
@@ -119,6 +135,13 @@ class EmojiClassifier:
                 ]
             )
         return incorrects
+
+    def resize_image(self, image: bytes):
+        image = Image.open(io.BytesIO(image)).convert("L")
+        image = image.resize(self.config.image_shape)
+        image = np.array(image)
+        image = image.reshape(1, *self.config.image_shape, 1)
+        return image
 
 
 def _main():
@@ -152,19 +175,14 @@ def _main():
         print(f"Incorrects: {len(incorrects)}")
         print(f"Total: {len(classifier.test_generator)}")
         print(f"Accuracy: {1 - len(incorrects) / len(classifier.test_generator):.2f}")
+
     elif action == "test":
         classifier = EmojiClassifier(EmojiClassifierConfig())
         classifier.load(model_name)
 
         with open("./var/test.png", "rb") as f:
-            # This image has 3 channels, but the model expects 1 channel
             image = f.read()
-
-            # Converting to grayscale 1 channel
-            image = np.array(Image.open(io.BytesIO(image)).convert("L"))
-
-            # Reshape to 64x64 image
-            image = image.reshape(1, *classifier.config.image_shape, 1)
+            image = classifier.resize_image(image)
 
         print(classifier.predict(image))
 

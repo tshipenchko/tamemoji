@@ -5,6 +5,12 @@ import aiofiles
 from fastapi import FastAPI, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
+from ai.model import EmojiClassifier
+from config import config
+
+classifier = EmojiClassifier(config.classifier)
+classifier.load(config.model_name)
+
 EMOJIS = {
     "smile",
     "sad",
@@ -35,6 +41,22 @@ async def write_file(directory, filename, contents):
     os.makedirs(directory, exist_ok=True)
     async with aiofiles.open(f"{directory}/{filename}", "wb") as f:
         await f.write(contents)
+
+
+@app.post("/send/{emoji}")
+def send_file(emoji: str, file: UploadFile = Form(...)):
+    contents = file.file.read()
+
+    with open("/home/user/tmp/test.png", "wb") as f:
+        f.write(contents)
+
+    # Resize the image to classifier's input size
+    image = classifier.resize_image(contents)
+    predictions, answer = classifier.predict(image)
+
+    return {
+        "message": f"I think, it's a {answer}", "predictions": predictions
+    }
 
 
 @app.post("/upload/{emoji}")
