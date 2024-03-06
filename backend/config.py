@@ -5,7 +5,7 @@ from ai.model import EmojiClassifierConfig
 
 class Config(BaseSettings):
     classifier: EmojiClassifierConfig = EmojiClassifierConfig()
-    model_name: str = "../models/model-2024-03-06T17:27:31.054477.keras"
+    model_name: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
