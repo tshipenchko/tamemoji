@@ -1,4 +1,6 @@
 # Tamemoji: Handwritten Emoji Recognition
+# [video report](https://youtu.be/REMOVED)
+# [application available online](https://tamemoji.zxc.sx/)
 
 Tamemoji is a project aimed at recognizing and classifying handwritten emojis. This project is developed using Python, FastAPI, TensorFlow, Keras, and React.js. The main goal is to provide a new user interface for typing emojis, especially on mobile devices with touch screens.
 
